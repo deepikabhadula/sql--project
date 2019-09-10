@@ -1,0 +1,280 @@
+SELECT
+     X5.R_CIRCLE,
+     X5.R_TRANSACTIONID,
+     X5.R_MSISDN,
+     X5.ACT_DATE,
+     X5.SERVICEID,
+     X5.IN_STATUS,
+     X5.IN_MRP,
+     X5.ACT_MRP,
+     X5.R_VG,
+     X5.R_DATE,
+     X5.R_TIME,
+     X5.R_MONTH,
+     X5.ADJ_DR1,
+     X5.P_SUM1,
+     X5.S_SUM1,
+     X5.ADJ_DR2,
+     X5.P_SUM2,
+     X5.S_SUM2,
+     X6.ADJ_DR3,
+     X6.P_SUM3,
+     X6.S_SUM3 
+FROM
+(
+SELECT
+     X3.R_CIRCLE,
+     X3.R_TRANSACTIONID,
+     X3.R_MSISDN,
+     X3.ACT_DATE,
+     X3.SERVICEID,
+     X3.IN_STATUS,
+     X3.IN_MRP,
+     X3.ACT_MRP,
+     X3.R_VG,
+     X3.R_DATE,
+     X3.R_TIME,
+     X3.R_MONTH,
+     X3.ADJ_DR1,
+     X3.P_SUM1,
+     X3.S_SUM1,
+     X4.ADJ_DR2,
+     X4.P_SUM2,
+     X4.S_SUM2    
+FROM
+(
+SELECT
+     X1.R_CIRCLE,
+     X1.R_TRANSACTIONID,
+     X1.R_MSISDN,
+     X1.ACT_DATE,
+     X1.SERVICEID,
+     X1.IN_STATUS,
+     X1.IN_MRP,
+     X1.ACT_MRP,
+     X1.R_VG,
+     X1.R_DATE,
+     X1.R_TIME,
+     X1.R_MONTH,
+     X2.ADJ_DR1,
+     X2.P_SUM1,
+     X2.S_SUM1
+FROM
+(
+SELECT
+     X.R_CIRCLE,
+     X.R_TRANSACTIONID,
+     X.R_MSISDN,
+     X.ACT_DATE,
+     X.SERVICEID,
+     X.IN_STATUS,
+     X.IN_MRP,
+CASE WHEN X.IN_MRP = 0.01 THEN  '05'
+     WHEN X.IN_MRP = 0.02 THEN '10'
+     WHEN X.IN_MRP = 0.68 THEN '05'
+     WHEN X.IN_MRP = 0.69 THEN '10'
+     WHEN X.IN_MRP = 0.57 THEN '05'
+     WHEN X.IN_MRP = 0.67 THEN '10' END   AS "ACT_MRP",
+     X.R_VG,
+     X.R_DATE,
+     X.R_TIME,
+     X.R_MONTH,
+     X.R_CNT
+FROM     
+(
+
+SELECT
+  mis_prepaid.VW_DLY_PRE_RECHARGE_DETAIL.CIRCLE R_CIRCLE,
+  mis_prepaid.VW_DLY_PRE_RECHARGE_DETAIL.TRANSACTIONID R_TRANSACTIONID,
+  mis_prepaid.VW_DLY_PRE_RECHARGE_DETAIL.MSISDN R_MSISDN,
+  mis_prepaid.VW_DLY_PRE_CUST_MASTER.ACTIVATION_DT ACT_DATE,
+  mis_prepaid.VW_DLY_PRE_CUST_MASTER.SERVICE_CLASS_ID SERVICEID,
+  mis_prepaid.VW_DLY_PRE_CUST_MASTER.IN_STATUS IN_STATUS,
+  mis_prepaid.VW_DLY_PRE_RECHARGE_DETAIL.MRP IN_MRP,
+  mis_prepaid.VW_DLY_PRE_RECHARGE_DETAIL.VOUCHER_GROUP R_VG,
+  mis_prepaid.VW_DLY_PRE_RECHARGE_DETAIL.RECHARGE_DATE R_DATE,
+  cast(mis_prepaid.VW_DLY_PRE_RECHARGE_DETAIL.RECHARGE_TIME as char(8)) R_TIME,
+  to_char(mis_prepaid.VW_DLY_PRE_RECHARGE_DETAIL.RECHARGE_DATE, 'MON-YYYY'::varchar(10)) R_MONTH,
+  SUM(mis_prepaid.VW_DLY_PRE_RECHARGE_DETAIL.RECHARGECOUNT) R_CNT
+FROM
+  mis_prepaid.VW_DLY_PRE_RECHARGE_DETAIL 
+  INNER JOIN mis_prepaid.VW_DLY_PRE_CUST_MASTER 
+  ON (mis_prepaid.VW_DLY_PRE_RECHARGE_DETAIL.MSISDN=mis_prepaid.VW_DLY_PRE_CUST_MASTER.SUBSCRIBER_NUMBER)
+   
+  
+WHERE 
+  mis_prepaid.VW_DLY_PRE_RECHARGE_DETAIL.RECHARGE_DATE  BETWEEN  add_months(current_date()-2 - extract(day from current_date()-2)+1,-3)  AND  add_months(current_date()-2 - extract(day from current_date()-2),-2)
+   AND
+    ( 
+     (
+       mis_prepaid.VW_DLY_PRE_RECHARGE_DETAIL.CIRCLE  IN  ( 'HP'  )
+       AND
+       mis_prepaid.VW_DLY_PRE_RECHARGE_DETAIL.VOUCHER_GROUP  IN  ( 'KP'  )
+       AND
+       mis_prepaid.VW_DLY_PRE_RECHARGE_DETAIL.MRP  IN  ( 0.68, 0.69  )
+      )
+      OR
+      (
+       mis_prepaid.VW_DLY_PRE_RECHARGE_DETAIL.CIRCLE  IN  ( 'WB'  )
+       AND
+       mis_prepaid.VW_DLY_PRE_RECHARGE_DETAIL.MRP  IN  ( 0.01, 0.02  )
+       AND
+       mis_prepaid.VW_DLY_PRE_RECHARGE_DETAIL.VOUCHER_GROUP  IN  ( 'TMC'  )
+      )
+      OR
+      (
+       mis_prepaid.VW_DLY_PRE_RECHARGE_DETAIL.CIRCLE  IN  ( 'KO'  )
+       AND
+       mis_prepaid.VW_DLY_PRE_RECHARGE_DETAIL.MRP  IN  ( 0.01, 0.02  )
+       AND
+       mis_prepaid.VW_DLY_PRE_RECHARGE_DETAIL.VOUCHER_GROUP  IN  ( 'TMC'  )
+      )
+      OR
+      (
+       mis_prepaid.VW_DLY_PRE_RECHARGE_DETAIL.CIRCLE  IN  ( 'OR'  )
+       AND
+       mis_prepaid.VW_DLY_PRE_RECHARGE_DETAIL.MRP  IN  ( 0.01, 0.02  )
+       AND
+       mis_prepaid.VW_DLY_PRE_RECHARGE_DETAIL.VOUCHER_GROUP  IN  ( 'TMC'  )
+      )
+      OR
+      (
+       mis_prepaid.VW_DLY_PRE_RECHARGE_DETAIL.CIRCLE  IN  ( 'NE'  )
+       AND
+       mis_prepaid.VW_DLY_PRE_RECHARGE_DETAIL.MRP  IN  ( 0.01, 0.02  )
+       AND
+       mis_prepaid.VW_DLY_PRE_RECHARGE_DETAIL.VOUCHER_GROUP  IN  ( 'TMC'  )
+      )
+      OR
+      (
+       mis_prepaid.VW_DLY_PRE_RECHARGE_DETAIL.CIRCLE  IN  ( 'AS'  )
+       AND
+       mis_prepaid.VW_DLY_PRE_RECHARGE_DETAIL.MRP  IN  ( 0.01, 0.02  )
+       AND
+       mis_prepaid.VW_DLY_PRE_RECHARGE_DETAIL.VOUCHER_GROUP  IN  ( 'TMC'  )
+      )
+      OR
+      (
+       mis_prepaid.VW_DLY_PRE_RECHARGE_DETAIL.CIRCLE  IN  ( 'JK'  )
+       AND
+       mis_prepaid.VW_DLY_PRE_RECHARGE_DETAIL.MRP  IN  ( 0.57, 0.67  )
+       AND
+       mis_prepaid.VW_DLY_PRE_RECHARGE_DETAIL.VOUCHER_GROUP  IN  ( 'P6'  )
+      )
+      OR
+      (
+       mis_prepaid.VW_DLY_PRE_RECHARGE_DETAIL.CIRCLE  IN  ( 'BH'  )
+       AND
+       mis_prepaid.VW_DLY_PRE_RECHARGE_DETAIL.MRP  IN  ( 0.01, 0.02  )
+       AND
+       mis_prepaid.VW_DLY_PRE_RECHARGE_DETAIL.VOUCHER_GROUP  IN  ( 'TMC'  )
+      ) 
+   )
+
+GROUP BY
+  1,
+2,
+3,
+4,
+5,
+6,
+7,
+8,
+9,
+10,
+11
+
+)X
+)X1
+LEFT OUTER JOIN
+(
+SELECT
+  mis_prepaid.VW_DLY_PRE_ADJ_FORFT.CIRCLE CIRCLE,
+  mis_prepaid.VW_DLY_PRE_ADJ_FORFT.ORIGIN_TRANSACTION_ID ADJ_TRANSACTIONID,
+    to_char(mis_prepaid.VW_DLY_PRE_ADJ_FORFT.DATE1, 'MON-YYYY'::varchar(10))  ADJ_MONTH1,
+  ABS(SUM(CASE WHEN mis_prepaid.VW_DLY_PRE_ADJ_FORFT.ADJMAINACAMT IS NULL THEN 0 ELSE mis_prepaid.VW_DLY_PRE_ADJ_FORFT.ADJMAINACAMT END)) AS ADJ_DR1,
+  sum (substr( mis_prepaid.VW_DLY_PRE_ADJ_FORFT.ADJREASON,(instr ( mis_prepaid.VW_DLY_PRE_ADJ_FORFT.ADJREASON,'P')+1),instr ( mis_prepaid.VW_DLY_PRE_ADJ_FORFT.ADJREASON,'S')-1-instr ( mis_prepaid.VW_DLY_PRE_ADJ_FORFT.ADJREASON,'P')) ) AS P_SUM1,
+  sum(substr( mis_prepaid.VW_DLY_PRE_ADJ_FORFT.ADJREASON,(instr ( mis_prepaid.VW_DLY_PRE_ADJ_FORFT.ADJREASON,'S')+1),1))  as S_SUM1
+FROM
+  mis_prepaid.VW_DLY_PRE_ADJ_FORFT
+WHERE 
+  mis_prepaid.VW_DLY_PRE_ADJ_FORFT.DATE1  BETWEEN  add_months(current_date()-2 - extract(day from current_date()-2)+1,-3)  AND  add_months(current_date()-2 - extract(day from current_date()-2),-2)
+  AND
+  (
+  mis_prepaid.VW_DLY_PRE_ADJ_FORFT.CIRCLE IN ('HP','WB','KO','OR','NE','AS','JK','BH')
+  AND
+  mis_prepaid.VW_DLY_PRE_ADJ_FORFT.ADJREASON  LIKE  '%MC%'
+  AND
+  mis_prepaid.VW_DLY_PRE_ADJ_FORFT.ADJREASON  LIKE  '%dd%'
+  AND
+  mis_prepaid.VW_DLY_PRE_ADJ_FORFT.ADJREASON  LIKE  '%DR%'
+  ) 
+GROUP BY
+  1, 
+  2, 
+  3
+ )X2
+ ON X1.R_TRANSACTIONID = X2.ADJ_TRANSACTIONID
+ )X3
+ LEFT OUTER JOIN
+ (
+ SELECT
+  mis_prepaid.VW_DLY_PRE_ADJ_FORFT.CIRCLE CIRCLE,
+  mis_prepaid.VW_DLY_PRE_ADJ_FORFT.ORIGIN_TRANSACTION_ID ADJ_TRANSACTIONID,
+    to_char(mis_prepaid.VW_DLY_PRE_ADJ_FORFT.DATE1, 'MON-YYYY'::varchar(10))  ADJ_MONTH2,
+  ABS(SUM(CASE WHEN mis_prepaid.VW_DLY_PRE_ADJ_FORFT.ADJMAINACAMT IS NULL THEN 0 ELSE mis_prepaid.VW_DLY_PRE_ADJ_FORFT.ADJMAINACAMT END)) AS ADJ_DR2,
+  sum (substr( mis_prepaid.VW_DLY_PRE_ADJ_FORFT.ADJREASON,(instr ( mis_prepaid.VW_DLY_PRE_ADJ_FORFT.ADJREASON,'P')+1),instr ( mis_prepaid.VW_DLY_PRE_ADJ_FORFT.ADJREASON,'S')-1-instr ( mis_prepaid.VW_DLY_PRE_ADJ_FORFT.ADJREASON,'P')) ) AS P_SUM2,
+  sum(substr( mis_prepaid.VW_DLY_PRE_ADJ_FORFT.ADJREASON,(instr ( mis_prepaid.VW_DLY_PRE_ADJ_FORFT.ADJREASON,'S')+1),1))  as S_SUM2
+FROM
+  mis_prepaid.VW_DLY_PRE_ADJ_FORFT
+WHERE 
+  mis_prepaid.VW_DLY_PRE_ADJ_FORFT.DATE1  BETWEEN  add_months(current_date()-2 - extract(day from current_date()-2)+1,-2)  AND  add_months(current_date()-2 - extract(day from current_date()-2),-1)
+  AND
+  (
+  mis_prepaid.VW_DLY_PRE_ADJ_FORFT.CIRCLE IN ('HP','WB','KO','OR','NE','AS','JK','BH')
+  AND
+  mis_prepaid.VW_DLY_PRE_ADJ_FORFT.ADJREASON  LIKE  '%MC%'
+  AND
+  mis_prepaid.VW_DLY_PRE_ADJ_FORFT.ADJREASON  LIKE  '%dd%'
+  AND
+  mis_prepaid.VW_DLY_PRE_ADJ_FORFT.ADJREASON  LIKE  '%DR%'
+  ) 
+GROUP BY
+  1, 
+  2, 
+  3
+
+  )X4
+  ON X3.R_TRANSACTIONID = X4.ADJ_TRANSACTIONID
+  )X5
+  LEFT OUTER JOIN
+   (
+  SELECT
+  mis_prepaid.VW_DLY_PRE_ADJ_FORFT.CIRCLE CIRCLE,
+  mis_prepaid.VW_DLY_PRE_ADJ_FORFT.ORIGIN_TRANSACTION_ID ADJ_TRANSACTIONID,
+    to_char(mis_prepaid.VW_DLY_PRE_ADJ_FORFT.DATE1, 'MON-YYYY'::varchar(10))  ADJ_MONTH3,
+
+  ABS(SUM(CASE WHEN mis_prepaid.VW_DLY_PRE_ADJ_FORFT.ADJMAINACAMT IS NULL THEN 0 ELSE mis_prepaid.VW_DLY_PRE_ADJ_FORFT.ADJMAINACAMT END)) AS ADJ_DR3,
+  sum (substr( mis_prepaid.VW_DLY_PRE_ADJ_FORFT.ADJREASON,(instr ( mis_prepaid.VW_DLY_PRE_ADJ_FORFT.ADJREASON,'P')+1),instr ( mis_prepaid.VW_DLY_PRE_ADJ_FORFT.ADJREASON,'S')-1-instr ( mis_prepaid.VW_DLY_PRE_ADJ_FORFT.ADJREASON,'P')) ) AS P_SUM3,
+  sum(substr( mis_prepaid.VW_DLY_PRE_ADJ_FORFT.ADJREASON,(instr ( mis_prepaid.VW_DLY_PRE_ADJ_FORFT.ADJREASON,'S')+1),1))  as S_SUM3
+FROM
+  mis_prepaid.VW_DLY_PRE_ADJ_FORFT
+WHERE 
+  mis_prepaid.VW_DLY_PRE_ADJ_FORFT.DATE1  BETWEEN  add_months(current_date()-2 - extract(day from current_date()-2)+1,-1)  AND  add_months(current_date()-2 - extract(day from current_date()-2),0)
+  AND
+  (
+  mis_prepaid.VW_DLY_PRE_ADJ_FORFT.CIRCLE IN ('HP','WB','KO','OR','NE','AS','JK','BH')
+  AND
+  mis_prepaid.VW_DLY_PRE_ADJ_FORFT.ADJREASON  LIKE  '%MC%'
+  AND
+  mis_prepaid.VW_DLY_PRE_ADJ_FORFT.ADJREASON  LIKE  '%dd%'
+  AND
+  mis_prepaid.VW_DLY_PRE_ADJ_FORFT.ADJREASON  LIKE  '%DR%'
+  ) 
+GROUP BY
+  1, 
+  2, 
+  3
+
+   )X6
+  ON X5.R_TRANSACTIONID = X6.ADJ_TRANSACTIONID 
